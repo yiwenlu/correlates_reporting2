@@ -1,41 +1,34 @@
 # Poisson Regression Modeling of Correlates of Risk
 
 
-## Reproducibility 
 
-This project uses the repo-level renv.lock. 
+## Reproduce ILiAD phase 2 correlates results
 
-
-### ILiAD phase 2 correlates
-
-Setup:
+**Setup**
 - Download and unzip the release
 https://github.com/CoVPN/correlates_reporting2/archive/refs/tags/2.2.6.zip
-- Run the following R command at the repo root level to install package dependencies:
+- Run the following R command at the repo root level to install package dependencies as this project uses the repo-level renv.lock:
 ```{R}
 renv::restore()
 ```
 - Open config.yml in an editor, look for iliad_ib202p, and modify the line below to point to the local copy of analysis-ready data file.
 
-
-
-To generate covpn_correlates_cor_poisson_iliad_ib202p.pdf, run the following commands in a bash shell:
+**Analysis**
+- This produces two pdfs: correlates_cor_poisson_iliad_ib202p_{datestring}.pdf and posthoc_analyses_{datestring}.pdf:
 ```{bash}
 export TRIAL=iliad_ib202p
 cd cor_poisson
 make 
 ```
 
-To render the R markdown files, run the following commands in a bash shell:
-```{bash}
-cd cor_poisson
-Rscript -e "rmarkdown::render('code/comparative_immunogenicity.Rmd', output_file='../comparative_immunogenicity_$(date +%Y%m%d).pdf')"
-Rscript -e "rmarkdown::render('code/diproperm_run.Rmd',              output_file='../diproperm_run_$(date +%Y%m%d).pdf')"
-Rscript -e "rmarkdown::render('code/posthoc_analyses.Rmd',           output_file='../posthoc_analyses_$(date +%Y%m%d).pdf')"
-```
+**Mapping between mansucript TLFs and reports**
 
-To run Yutong's code to generate the heatmap pdf files, run the following commands in a bash shell:
-```{bash}
-cd cor_poisson
-Rscript code/Plotting_Main_YutongJin.R
-```
+| Manuscript | Report                        |
+|------------|-------------------------------|
+| Table 1    | correlates_cor_poisson Figure |
+| Table 2    | posthoc_analyses Table       |
+| Table 3    | Value 3                       |
+| Figure 1   | Value 4                       |
+| Figure 2   | Value 5                       |
+| Figure 3   | Value 6                       |
+| Figure 4   | Value 7                       |
