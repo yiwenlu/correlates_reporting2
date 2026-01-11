@@ -1,4 +1,4 @@
-# Sanofi Stage 2 CoP manuscript Mediation Code 
+# Sanofi Stage 2 CoP Cumulative Incidence Plot
 
 ## Reproducibility
 

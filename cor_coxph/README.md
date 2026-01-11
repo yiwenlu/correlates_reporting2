@@ -60,21 +60,42 @@ make
 
 ### Sanofi Stage 2 correlates manuscript
 ```{bash}
-# obtaining the code
-wget https://github.com/CoVPN/correlates_reporting2/archive/d0ebf4628c01d50732fde2318c6dbeb8a6339db6.zip
-unzip d0ebf4628c01d50732fde2318c6dbeb8a6339db6.zip
-cd correlates_reporting2-d0ebf4628c01d50732fde2318c6dbeb8a6339db6
+# a) obtaining the code
+wget https://github.com/CoVPN/correlates_reporting2/archive/refs/tags/sanofi_stage2_correlates_R40.zip
+unzip sanofi_stage2_correlates_R40.zip
+cd correlates_reporting2-sanofi_stage2_correlates_R40
 
-# edit config.yml: make sure the data_cleaned field uder vat08_combined points to a copy of vat08_combined_data_processed_20250417.csv
-
-# restore P package dependencies
+# b) restore R package dependencies
 R
     Sys.setenv(GITHUB_PAT = "xxxxxxxxxxxxxxxxxxxxxxxxxx") # use your personal github access token
     renv::restore()
 
-# generate report pdf
+# c) edit config.yml so that the data_cleaned field uder vat08_combined points to a local copy of vat08_combined_data_processed_20250417.csv
+
+# d) generate report pdf
 export TRIAL=vat08_combined
 export stage=2    
+cd cor_coxph
+make 
+```
+
+
+### COV20008 correlates manuscript
+```{bash}
+# a) obtaining the code
+wget https://github.com/CoVPN/correlates_reporting2/archive/refs/tags/xxxxxxxxx
+unzip xxxxx
+cd xxxxx
+
+# b) restore R package dependencies
+R
+    Sys.setenv(GITHUB_PAT = "xxxxxxxxxxxxxxxxxxxxxxxxxx") # use your personal github access token
+    renv::restore()
+
+# c) edit config.yml so that the data_cleaned field uder vat08_combined points to a local copy of vat08_combined_data_processed_20250417.csv
+
+# d) generate report pdf
+export TRIAL=cov2008_tcell
 cd cor_coxph
 make 
 ```

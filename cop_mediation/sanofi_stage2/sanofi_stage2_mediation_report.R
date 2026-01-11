@@ -1,47 +1,28 @@
----
-title: "Mediation - Sanofi"
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
-# SanofiCorrelatesControlledRiskandVEMediationandNonparametricThresholdingDataAnalysisNotes
-
-renv::activate(project = here::here(".."))
-
 library(SuperLearner)
 library(tidyverse)
 library(dplyr)
 library(openxlsx)
 
-# preliminary info
+# process command line arguments
+args <- commandArgs(trailingOnly = TRUE)
+
+marker_set <- args[1]
 
 Sys.setenv(TRIAL = "sanofi")
 COR <- "D15to181"
 
 Sys.getenv("TRIAL") # check that setenv worked
 
-# here::i_am("sanofi/code_reporting.Rmd")
-
 
 source("../code/format_utils.R")
 
-```
 
-```{r}
 # read in data
 data <- read.csv(
   "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/vat08_combined_data_processed_20250417.csv",
   header = TRUE
 )
-```
 
-```{r}
 # subset data to people who are non-naive
 data_nonnaive <- data[data$Bserostatus == 1, ]
 
@@ -57,90 +38,97 @@ data_nonnaive$region_AsiaPac <- ifelse(data_nonnaive$Region3 == "AsiaPac", 1, 0)
 covariates <- c("standardized_risk_score", 
                 "FOI")
 
-# fold-change markers
-# comment/uncomment Day43 vs. fold-rise variables
-# Stage 1 and 2 bAbs
-# replace measured values in bAbs with NA for obs with ph2.D43.bAb == FALSE
-data_nonnaive$Delta43overBbindSpike[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_beta[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_alpha[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_gamma[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_delta1[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_delta2[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_delta3[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_omicron[!data_nonnaive$ph2.D43.bAb] <- NA
-data_nonnaive$Delta43overBbindSpike_mdw[!data_nonnaive$ph2.D43.bAb] <- NA
+if (marker_set=='FR') {
+  # fold-change markers
+  # comment/uncomment Day43 vs. fold-rise variables
+  # Stage 1 and 2 bAbs
+  # replace measured values in bAbs with NA for obs with ph2.D43.bAb == FALSE
+  data_nonnaive$Delta43overBbindSpike[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_beta[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_alpha[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_gamma[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_delta1[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_delta2[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_delta3[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_omicron[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Delta43overBbindSpike_mdw[!data_nonnaive$ph2.D43.bAb] <- NA
+  
+  # Stage 2 nAbs
+  # replace measured values in nAbs with NA for obs with ph2.D43.nAb == FALSE
+  data_nonnaive$Delta43overBpseudoneutid50[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Delta43overBpseudoneutid50_B.1.351[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Delta43overBpseudoneutid50_BA.1[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Delta43overBpseudoneutid50_BA.2[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Delta43overBpseudoneutid50_BA.4.5[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Delta43overBpseudoneutid50_mdw[!data_nonnaive$ph2.D43.nAb] <- NA
+  
+  # fold-change markers
+  # specify markers by stage and Ab type
+  # Stage 1 and 2 bAbs
+  markers_st1and2_bAb <- c(
+    "Delta43overBbindSpike",
+    "Delta43overBbindSpike_beta",
+    "Delta43overBbindSpike_alpha",
+    "Delta43overBbindSpike_gamma",
+    "Delta43overBbindSpike_delta1",
+    "Delta43overBbindSpike_delta2",
+    "Delta43overBbindSpike_delta3",
+    "Delta43overBbindSpike_omicron",
+    "Delta43overBbindSpike_mdw"
+  )
+  
+  # Stage 2 nAbs
+  markers_st2_nAb <- c(
+    "Delta43overBpseudoneutid50",
+    "Delta43overBpseudoneutid50_B.1.351",
+    "Delta43overBpseudoneutid50_BA.1",
+    "Delta43overBpseudoneutid50_BA.2",
+    "Delta43overBpseudoneutid50_BA.4.5",
+    "Delta43overBpseudoneutid50_mdw"
+  )
+  
+} else if (marker_set=='Day43') {
 
-# data_nonnaive$Day43bindSpike[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_beta[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_alpha[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_gamma[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_delta1[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_delta3[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_omicron[!data_nonnaive$ph2.D43.bAb] <- NA
-# data_nonnaive$Day43bindSpike_mdw[!data_nonnaive$ph2.D43.bAb] <- NA
-
-# Stage 2 nAbs
-# replace measured values in nAbs with NA for obs with ph2.D43.nAb == FALSE
-data_nonnaive$Delta43overBpseudoneutid50[!data_nonnaive$ph2.D43.nAb] <- NA
-data_nonnaive$Delta43overBpseudoneutid50_B.1.351[!data_nonnaive$ph2.D43.nAb] <- NA
-data_nonnaive$Delta43overBpseudoneutid50_BA.1[!data_nonnaive$ph2.D43.nAb] <- NA
-data_nonnaive$Delta43overBpseudoneutid50_BA.2[!data_nonnaive$ph2.D43.nAb] <- NA
-data_nonnaive$Delta43overBpseudoneutid50_BA.4.5[!data_nonnaive$ph2.D43.nAb] <- NA
-data_nonnaive$Delta43overBpseudoneutid50_mdw[!data_nonnaive$ph2.D43.nAb] <- NA
-
-# data_nonnaive$Day43pseudoneutid50[!data_nonnaive$ph2.D43.nAb] <- NA
-# data_nonnaive$Day43pseudoneutid50_B.1.351[!data_nonnaive$ph2.D43.nAb] <- NA
-# data_nonnaive$Day43pseudoneutid50_BA.1[!data_nonnaive$ph2.D43.nAb] <- NA
-# data_nonnaive$Day43pseudoneutid50_BA.2[!data_nonnaive$ph2.D43.nAb] <- NA
-# data_nonnaive$Day43pseudoneutid50_BA.4.5[!data_nonnaive$ph2.D43.nAb] <- NA
-# data_nonnaive$Day43pseudoneutid50_mdw[!data_nonnaive$ph2.D43.nAb] <- NA
-
-# fold-change markers
-# specify markers by stage and Ab type
-# Stage 1 and 2 bAbs
-markers_st1and2_bAb <- c(
-  "Delta43overBbindSpike",
-  "Delta43overBbindSpike_beta",
-  "Delta43overBbindSpike_alpha",
-  "Delta43overBbindSpike_gamma",
-  "Delta43overBbindSpike_delta1",
-  "Delta43overBbindSpike_delta2",
-  "Delta43overBbindSpike_delta3",
-  "Delta43overBbindSpike_omicron",
-  "Delta43overBbindSpike_mdw"
-)
-
-# markers_st1and2_bAb <- c(
-#   "Day43bindSpike",
-#   "Day43bindSpike_beta",
-#   "Day43bindSpike_alpha",
-#   "Day43bindSpike_gamma",
-#   "Day43bindSpike_delta1",
-#   "Day43bindSpike_delta2",
-#   "Day43bindSpike_delta3",
-#   "Day43bindSpike_omicron",
-#   "Day43bindSpike_mdw"
-# )
-
-# Stage 2 nAbs
-markers_st2_nAb <- c(
-  "Delta43overBpseudoneutid50",
-  "Delta43overBpseudoneutid50_B.1.351",
-  "Delta43overBpseudoneutid50_BA.1",
-  "Delta43overBpseudoneutid50_BA.2",
-  "Delta43overBpseudoneutid50_BA.4.5",
-  "Delta43overBpseudoneutid50_mdw"
-)
-
-# markers_st2_nAb <- c(
-#   "Day43pseudoneutid50",
-#   "Day43pseudoneutid50_B.1.351",
-#   "Day43pseudoneutid50_BA.1",
-#   "Day43pseudoneutid50_BA.2",
-#   "Day43pseudoneutid50_BA.4.5",
-#   "Day43pseudoneutid50_mdw"
-# )
+  data_nonnaive$Day43bindSpike[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_beta[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_alpha[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_gamma[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_delta1[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_delta3[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_omicron[!data_nonnaive$ph2.D43.bAb] <- NA
+  data_nonnaive$Day43bindSpike_mdw[!data_nonnaive$ph2.D43.bAb] <- NA
+  
+  data_nonnaive$Day43pseudoneutid50[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Day43pseudoneutid50_B.1.351[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Day43pseudoneutid50_BA.1[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Day43pseudoneutid50_BA.2[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Day43pseudoneutid50_BA.4.5[!data_nonnaive$ph2.D43.nAb] <- NA
+  data_nonnaive$Day43pseudoneutid50_mdw[!data_nonnaive$ph2.D43.nAb] <- NA
+  
+  markers_st1and2_bAb <- c(
+    "Day43bindSpike",
+    "Day43bindSpike_beta",
+    "Day43bindSpike_alpha",
+    "Day43bindSpike_gamma",
+    "Day43bindSpike_delta1",
+    "Day43bindSpike_delta2",
+    "Day43bindSpike_delta3",
+    "Day43bindSpike_omicron",
+    "Day43bindSpike_mdw"
+  )
+  
+  markers_st2_nAb <- c(
+    "Day43pseudoneutid50",
+    "Day43pseudoneutid50_B.1.351",
+    "Day43pseudoneutid50_BA.1",
+    "Day43pseudoneutid50_BA.2",
+    "Day43pseudoneutid50_BA.4.5",
+    "Day43pseudoneutid50_mdw"
+  )
+  
+} else {
+  stop("marker_set must be either 'FR' or 'Day43'")
+}
 
 # specify variables to keep across all stage and Ab type
 vars_to_keep <- c(
@@ -225,9 +213,7 @@ results_list <- list(
     Total = NA, Indirect = NA, Direct = NA, Prop_med = NA)
 )
 
-```
 
-```{r}
 # save model fits
 # create empty list
 models_list <- vector("list", nrow(index_info))
@@ -244,9 +230,7 @@ for (k in 1:nrow(index_info)) {
   names[k] <- paste0("st", index_info$stage[k], "_", index_info$Ab_type[k], "_", index_info$marker[k])
 }
 names(models_list) <- names
-```
 
-```{r}
 
 # iterate through index_info
 for (i in 1:nrow(index_info)) {
@@ -485,7 +469,7 @@ for (i in 1:nrow(index_info)) {
 # write to excel
 write.xlsx(
   results_list,
-  file = "sanofi_20250617_delta.xlsx"
+  file = paste0("sanofi_", marker_set, "_", format(Sys.Date(), "%Y%m%d"), ".xlsx")
 )
 
 
@@ -498,12 +482,3 @@ write.xlsx(
 # models_bAb_alpha <- readRDS(file = "models_20250610_bAb_alpha")
 # models_bAb_beta <- readRDS(file = "models_20250610_bAb_beta")
 # models_nAb_BA1 <- readRDS(file = "models_20250610_nAb_BA1")
-
-
-```
-
-
-
-
-
-
